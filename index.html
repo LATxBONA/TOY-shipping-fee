@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Quản lý phí ship</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f9f9f9;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .form {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input, button {
+      padding: 12px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    button {
+      background: #007bff;
+      color: white;
+      border: none;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background: #0056b3;
+    }
+
+    .table-container {
+      overflow-x: auto;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: white;
+      border-radius: 6px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px;
+      border: 1px solid #eee;
+      font-size: 15px;
+    }
+
+    th {
+      background: #f2f2f2;
+    }
+
+    td button {
+      background: #dc3545;
+      border: none;
+      color: white;
+      padding: 8px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+
+    td button:hover {
+      background: #b02a37;
+    }
+
+    .total {
+      font-size: 18px;
+      font-weight: bold;
+      margin-top: 15px;
+      text-align: right;
+    }
+
+    .actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-top: 20px;
+    }
+
+    .clear-btn {
+      background: #dc3545;
+      padding: 10px 15px;
+      font-size: 15px;
+      border-radius: 6px;
+    }
+
+    .clear-btn:hover {
+      background: #b02a37;
+    }
+
+    footer {
+      margin-top: 30px;
+      padding: 15px;
+      text-align: center;
+      font-size: 14px;
+      color: #555;
+      background: #f2f2f2;
+      border-top: 1px solid #ddd;
+      border-radius: 6px;
+      line-height: 1.6;
+    }
+  </style>
+</head>
+<body>
+  <h2>Quản lý phí ship</h2>
+
+  <div class="form">
+    <input type="date" id="date">
+    <input type="text" id="order" placeholder="Đơn hàng">
+    <input type="text" id="address" placeholder="Địa chỉ">
+    <input type="number" id="fee" placeholder="Phí ship (đ)">
+    <button onclick="addOrder()">➕ Thêm đơn</button>
+  </div>
+
+  <div class="table-container">
+    <table id="orderTable">
+      <thead>
+        <tr>
+          <th>Ngày</th>
+          <th>Đơn hàng</th>
+          <th>Địa chỉ</th>
+          <th>Phí ship</th>
+          <th>Xóa</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+
+  <div class="actions">
+    <div class="total">Tổng phí: <span id="total">0</span> đ</div>
+    <button class="clear-btn" onclick="clearAll()">🗑️ Xóa tất cả</button>
+  </div>
+
+  <footer>
+    © 2025 <strong>LATxBONA</strong> — Thiết kế &amp; phát triển bởi LAT <br>
+    Ứng dụng: <em>Quản lý phí ship</em> — Tính tổng phí theo ngày
+  </footer>
+
+  <script>
+    let orders = JSON.parse(localStorage.getItem("orders")) || [];
+
+    function render() {
+      let tbody = document.querySelector("#orderTable tbody");
+      tbody.innerHTML = "";
+      let total = 0;
+      orders.forEach((o, index) => {
+        let row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${o.date}</td>
+          <td>${o.order}</td>
+          <td>${o.address}</td>
+          <td>${Number(o.fee).toLocaleString()} đ</td>
+          <td><button onclick="deleteOrder(${index})">Xóa</button></td>
+        `;
+        tbody.appendChild(row);
+        total += Number(o.fee);
+      });
+      document.getElementById("total").textContent = total.toLocaleString();
+      localStorage.setItem("orders", JSON.stringify(orders));
+    }
+
+    function addOrder() {
+      let date = document.getElementById("date").value;
+      let order = document.getElementById("order").value.trim();
+      let address = document.getElementById("address").value.trim();
+      let fee = document.getElementById("fee").value.trim();
+      if (date && order && address && fee) {
+        orders.push({ date, order, address, fee });
+        render();
+        document.getElementById("date").value = "";
+        document.getElementById("order").value = "";
+        document.getElementById("address").value = "";
+        document.getElementById("fee").value = "";
+      } else {
+        alert("Vui lòng nhập đủ thông tin!");
+      }
+    }
+
+    function deleteOrder(index) {
+      if (confirm("Bạn có chắc muốn xóa đơn này?")) {
+        orders.splice(index, 1);
+        render();
+      }
+    }
+
+    function clearAll() {
+      if (confirm("Bạn có chắc muốn xóa TẤT CẢ đơn hàng?")) {
+        orders = [];
+        localStorage.removeItem("orders");
+        render();
+      }
+    }
+
+    render();
+  </script>
+</body>
+</html>

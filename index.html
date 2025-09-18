@@ -151,61 +151,85 @@
   </footer>
 
   <script>
-    let orders = JSON.parse(localStorage.getItem("orders")) || [];
+    const API_URL = "https://sheetdb.io/api/v1/ub2qzs3agix8l";
 
-    function render() {
+    // Load dữ liệu từ SheetDB
+    async function loadOrders() {
+      let res = await fetch(API_URL);
+      let orders = await res.json();
+
       let tbody = document.querySelector("#orderTable tbody");
       tbody.innerHTML = "";
       let total = 0;
-      orders.forEach((o, index) => {
-        let row = document.createElement("tr");
-        row.innerHTML = `
+
+      orders.forEach((o) => {
+        let tr = document.createElement("tr");
+        tr.innerHTML = `
           <td>${o.date}</td>
           <td>${o.order}</td>
           <td>${o.address}</td>
           <td>${Number(o.fee).toLocaleString()} đ</td>
-          <td><button onclick="deleteOrder(${index})">Xóa</button></td>
+          <td><button onclick="deleteOrder('${o.date}','${o.order}')">Xóa</button></td>
         `;
-        tbody.appendChild(row);
+        tbody.appendChild(tr);
         total += Number(o.fee);
       });
+
       document.getElementById("total").textContent = total.toLocaleString();
-      localStorage.setItem("orders", JSON.stringify(orders));
     }
 
-    function addOrder() {
-      let date = document.getElementById("date").value;
+    // Thêm đơn hàng mới
+    async function addOrder() {
+      let date = document.getElementById("date").value;  // giữ nguyên, không reset
       let order = document.getElementById("order").value.trim();
       let address = document.getElementById("address").value.trim();
       let fee = document.getElementById("fee").value.trim();
+
       if (date && order && address && fee) {
-        orders.push({ date, order, address, fee });
-        render();
-        document.getElementById("date").value = "";
+        await fetch(API_URL, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            data: [{ date, order, address, fee }]
+          })
+        });
+        // Reset form (KHÔNG reset date)
         document.getElementById("order").value = "";
         document.getElementById("address").value = "";
         document.getElementById("fee").value = "";
+        
+        loadOrders();
       } else {
         alert("Vui lòng nhập đủ thông tin!");
       }
     }
 
-    function deleteOrder(index) {
+    // Xóa đơn hàng theo date + order
+    async function deleteOrder(date, order) {
       if (confirm("Bạn có chắc muốn xóa đơn này?")) {
-        orders.splice(index, 1);
-        render();
+        await fetch(`${API_URL}/date/${date}/order/${order}`, {
+          method: "DELETE"
+        });
+        loadOrders();
       }
     }
 
-    function clearAll() {
+    // Xóa tất cả
+    async function clearAll() {
       if (confirm("Bạn có chắc muốn xóa TẤT CẢ đơn hàng?")) {
-        orders = [];
-        localStorage.removeItem("orders");
-        render();
+        await fetch(API_URL + "/all", { method: "DELETE" });
+        loadOrders();
       }
     }
 
-    render();
+    // Khi load trang -> set mặc định ngày hôm nay + gọi API
+    window.onload = () => {
+      // Set ngày hôm nay
+      let today = new Date().toISOString().split("T")[0];
+      document.getElementById("date").value = today;
+
+      loadOrders();
+    };
   </script>
 </body>
 </html>

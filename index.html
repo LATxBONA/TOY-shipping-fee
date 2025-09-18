@@ -16,6 +16,7 @@
       margin-bottom: 15px;
     }
 
+    /* Form nhập liệu */
     .form {
       display: flex;
       flex-direction: column;
@@ -41,6 +42,7 @@
       background: #0056b3;
     }
 
+    /* Bảng hiển thị dữ liệu */
     .table-container {
       overflow-x: auto;
     }
@@ -57,6 +59,7 @@
       padding: 12px;
       border: 1px solid #eee;
       font-size: 15px;
+      white-space: nowrap;
     }
 
     th {
@@ -76,6 +79,7 @@
       background: #b02a37;
     }
 
+    /* Tổng phí */
     .total {
       font-size: 18px;
       font-weight: bold;
@@ -90,6 +94,7 @@
       margin-top: 20px;
     }
 
+    /* Nút xóa tất cả */
     .clear-btn {
       background: #dc3545;
       padding: 10px 15px;
@@ -101,6 +106,7 @@
       background: #b02a37;
     }
 
+    /* Footer */
     footer {
       margin-top: 30px;
       padding: 15px;
@@ -112,19 +118,36 @@
       border-radius: 6px;
       line-height: 1.6;
     }
+
+    /* Responsive cho mobile */
+    @media (max-width: 600px) {
+      th, td {
+        font-size: 13px;
+        padding: 8px;
+      }
+      input, button {
+        font-size: 14px;
+        padding: 10px;
+      }
+      .total {
+        font-size: 16px;
+      }
+    }
   </style>
 </head>
 <body>
   <h2>Quản lý phí ship</h2>
 
+  <!-- Form nhập đơn hàng -->
   <div class="form">
     <input type="date" id="date">
     <input type="text" id="order" placeholder="Đơn hàng">
     <input type="text" id="address" placeholder="Địa chỉ">
-    <input type="number" id="fee" placeholder="Phí ship (đ)">
+    <input type="text" id="fee" placeholder="Phí ship (đ)" inputmode="numeric" pattern="[0-9]*">
     <button onclick="addOrder()">➕ Thêm đơn</button>
   </div>
 
+  <!-- Bảng hiển thị đơn hàng -->
   <div class="table-container">
     <table id="orderTable">
       <thead>
@@ -140,20 +163,29 @@
     </table>
   </div>
 
+  <!-- Tổng phí + nút xóa tất cả -->
   <div class="actions">
     <div class="total">Tổng phí: <span id="total">0</span> đ</div>
     <button class="clear-btn" onclick="clearAll()">🗑️ Xóa tất cả</button>
   </div>
 
+  <!-- Footer -->
   <footer>
     © 2025 <strong>LATxBONA</strong> — Thiết kế &amp; phát triển bởi LAT <br>
     Ứng dụng: <em>Quản lý phí ship</em> — Tính tổng phí theo ngày
   </footer>
 
   <script>
+    // URL API SheetDB
     const API_URL = "https://sheetdb.io/api/v1/ub2qzs3agix8l";
 
-    // Load dữ liệu từ SheetDB
+    // Định dạng ngày từ yyyy-mm-dd -> dd/mm/yyyy
+    function formatDate(dateStr) {
+      let [y, m, d] = dateStr.split("-");
+      return `${d}/${m}/${y}`;
+    }
+
+    // Tải danh sách đơn hàng từ API
     async function loadOrders() {
       let res = await fetch(API_URL);
       let orders = await res.json();
@@ -165,25 +197,26 @@
       orders.forEach((o) => {
         let tr = document.createElement("tr");
         tr.innerHTML = `
-          <td>${o.date}</td>
+          <td>${formatDate(o.date)}</td>
           <td>${o.order}</td>
           <td>${o.address}</td>
-          <td>${Number(o.fee).toLocaleString()} đ</td>
-          <td><button onclick="deleteOrder('${o.date}','${o.order}')">Xóa</button></td>
+          <td>${Number(o.fee).toLocaleString("vi-VN")} đ</td>
+          <td><button onclick="deleteOrder('${o.order}')">Xóa</button></td>
         `;
         tbody.appendChild(tr);
         total += Number(o.fee);
       });
 
-      document.getElementById("total").textContent = total.toLocaleString();
+      // Cập nhật tổng phí
+      document.getElementById("total").textContent = total.toLocaleString("vi-VN");
     }
 
     // Thêm đơn hàng mới
     async function addOrder() {
-      let date = document.getElementById("date").value;  // giữ nguyên, không reset
+      let date = document.getElementById("date").value;
       let order = document.getElementById("order").value.trim();
       let address = document.getElementById("address").value.trim();
-      let fee = document.getElementById("fee").value.trim();
+      let fee = document.getElementById("fee").value.replace(/\./g, "").replace(/,/g, "");
 
       if (date && order && address && fee) {
         await fetch(API_URL, {
@@ -193,7 +226,7 @@
             data: [{ date, order, address, fee }]
           })
         });
-        // Reset form (KHÔNG reset date)
+        // Xóa dữ liệu input sau khi thêm
         document.getElementById("order").value = "";
         document.getElementById("address").value = "";
         document.getElementById("fee").value = "";
@@ -204,17 +237,17 @@
       }
     }
 
-    // Xóa đơn hàng theo date + order
-    async function deleteOrder(date, order) {
+    // Xóa 1 đơn hàng theo tên "order"
+    async function deleteOrder(orderName) {
       if (confirm("Bạn có chắc muốn xóa đơn này?")) {
-        await fetch(`${API_URL}/date/${date}/order/${order}`, {
+        await fetch(`${API_URL}/order/${encodeURIComponent(orderName)}`, {
           method: "DELETE"
         });
         loadOrders();
       }
     }
 
-    // Xóa tất cả
+    // Xóa toàn bộ đơn hàng
     async function clearAll() {
       if (confirm("Bạn có chắc muốn xóa TẤT CẢ đơn hàng?")) {
         await fetch(API_URL + "/all", { method: "DELETE" });
@@ -222,12 +255,19 @@
       }
     }
 
-    // Khi load trang -> set mặc định ngày hôm nay + gọi API
+    // Format số tiền trong ô input "fee"
+    const feeInput = document.getElementById("fee");
+    feeInput.addEventListener("input", () => {
+      let value = feeInput.value.replace(/\D/g, "");
+      if (value) {
+        feeInput.value = Number(value).toLocaleString("vi-VN");
+      }
+    });
+
+    // Tự động set ngày hôm nay khi mở trang + load dữ liệu
     window.onload = () => {
-      // Set ngày hôm nay
       let today = new Date().toISOString().split("T")[0];
       document.getElementById("date").value = today;
-
       loadOrders();
     };
   </script>

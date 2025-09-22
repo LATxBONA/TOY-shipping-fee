@@ -10,128 +10,26 @@
       margin: 20px;
       background: #f9f9f9;
     }
-
-    h2 {
-      text-align: center;
-      margin-bottom: 15px;
-    }
-
-    /* Form nhập liệu */
-    .form {
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-      margin-bottom: 20px;
-    }
-
-    input, button {
-      padding: 12px;
-      font-size: 16px;
-      border: 1px solid #ccc;
-      border-radius: 6px;
-    }
-
-    button {
-      background: #007bff;
-      color: white;
-      border: none;
-      cursor: pointer;
-    }
-
-    button:hover {
-      background: #0056b3;
-    }
-
-    /* Bảng hiển thị dữ liệu */
-    .table-container {
-      overflow-x: auto;
-    }
-
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      background: white;
-      border-radius: 6px;
-      overflow: hidden;
-    }
-
-    th, td {
-      padding: 12px;
-      border: 1px solid #eee;
-      font-size: 15px;
-      white-space: nowrap;
-    }
-
-    th {
-      background: #f2f2f2;
-    }
-
-    td button {
-      background: #dc3545;
-      border: none;
-      color: white;
-      padding: 8px 12px;
-      border-radius: 4px;
-      cursor: pointer;
-    }
-
-    td button:hover {
-      background: #b02a37;
-    }
-
-    /* Tổng phí */
-    .total {
-      font-size: 18px;
-      font-weight: bold;
-      margin-top: 15px;
-      text-align: right;
-    }
-
-    .actions {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-top: 20px;
-    }
-
-    /* Nút xóa tất cả */
-    .clear-btn {
-      background: #dc3545;
-      padding: 10px 15px;
-      font-size: 15px;
-      border-radius: 6px;
-    }
-
-    .clear-btn:hover {
-      background: #b02a37;
-    }
-
-    /* Footer */
-    footer {
-      margin-top: 30px;
-      padding: 15px;
-      text-align: center;
-      font-size: 14px;
-      color: #555;
-      background: #f2f2f2;
-      border-top: 1px solid #ddd;
-      border-radius: 6px;
-      line-height: 1.6;
-    }
-
-    /* Responsive cho mobile */
+    h2 { text-align: center; margin-bottom: 15px; }
+    .form { display: flex; flex-direction: column; gap: 10px; margin-bottom: 20px; }
+    input, button { padding: 12px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; }
+    button { background: #007bff; color: white; border: none; cursor: pointer; }
+    button:hover { background: #0056b3; }
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; background: white; border-radius: 6px; overflow: hidden; }
+    th, td { padding: 12px; border: 1px solid #eee; font-size: 15px; white-space: nowrap; }
+    th { background: #f2f2f2; }
+    td button { background: #dc3545; border: none; color: white; padding: 8px 12px; border-radius: 4px; cursor: pointer; }
+    td button:hover { background: #b02a37; }
+    .total { font-size: 18px; font-weight: bold; margin-top: 15px; text-align: right; }
+    .actions { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+    .clear-btn { background: #dc3545; padding: 10px 15px; font-size: 15px; border-radius: 6px; }
+    .clear-btn:hover { background: #b02a37; }
+    footer { margin-top: 30px; padding: 15px; text-align: center; font-size: 14px; color: #555; background: #f2f2f2; border-top: 1px solid #ddd; border-radius: 6px; line-height: 1.6; }
     @media (max-width: 600px) {
-      th, td {
-        font-size: 13px;
-        padding: 8px;
-      }
-      input, button {
-        font-size: 14px;
-        padding: 10px;
-      }
-      .total {
-        font-size: 16px;
-      }
+      th, td { font-size: 13px; padding: 8px; }
+      input, button { font-size: 14px; padding: 10px; }
+      .total { font-size: 16px; }
     }
   </style>
 </head>
@@ -175,87 +73,98 @@
     Ứng dụng: <em>Quản lý phí ship</em> — Tính tổng phí theo ngày
   </footer>
 
-  <script>
-    // URL API SheetDB
-    const API_URL = "https://sheetdb.io/api/v1/ub2qzs3agix8l";
+  <!-- Firebase SDK -->
+  <script type="module">
+    // Import Firebase
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-app.js";
+    import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query } from "https://www.gstatic.com/firebasejs/10.13.0/firebase-firestore.js";
 
-    // Định dạng ngày từ yyyy-mm-dd -> dd/mm/yyyy
+    // 🔥 Config Firebase (thay bằng config của bạn trong Firebase Console)
+  const firebaseConfig = {
+    apiKey: "AIzaSyCuUoOJIKom95p2pusyi6oLo-NQvMMOsbw",
+    authDomain: "shipingfee-45cff.firebaseapp.com",
+    projectId: "shipingfee-45cff",
+    storageBucket: "shipingfee-45cff.firebasestorage.app",
+    messagingSenderId: "518557431845",
+    appId: "1:518557431845:web:0873293e1eafedbcf627cc",
+    measurementId: "G-W558XRN5TF"
+  };
+
+    // Khởi tạo Firebase
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    // Định dạng ngày
     function formatDate(dateStr) {
       let [y, m, d] = dateStr.split("-");
       return `${d}/${m}/${y}`;
     }
 
-    // Tải danh sách đơn hàng từ API
+    // Load đơn hàng
     async function loadOrders() {
-      let res = await fetch(API_URL);
-      let orders = await res.json();
-
       let tbody = document.querySelector("#orderTable tbody");
       tbody.innerHTML = "";
       let total = 0;
 
-      orders.forEach((o) => {
+      const q = query(collection(db, "orders"));
+      const snapshot = await getDocs(q);
+
+      snapshot.forEach((docSnap) => {
+        let o = docSnap.data();
         let tr = document.createElement("tr");
         tr.innerHTML = `
           <td>${formatDate(o.date)}</td>
           <td>${o.order}</td>
           <td>${o.address}</td>
           <td>${Number(o.fee).toLocaleString("vi-VN")} đ</td>
-          <td><button onclick="deleteOrder('${o.order}')">Xóa</button></td>
+          <td><button onclick="deleteOrder('${docSnap.id}')">Xóa</button></td>
         `;
         tbody.appendChild(tr);
         total += Number(o.fee);
       });
 
-      // Cập nhật tổng phí
       document.getElementById("total").textContent = total.toLocaleString("vi-VN");
     }
 
-    // Thêm đơn hàng mới
-    async function addOrder() {
+    // Thêm đơn hàng
+    window.addOrder = async function() {
       let date = document.getElementById("date").value;
       let order = document.getElementById("order").value.trim();
       let address = document.getElementById("address").value.trim();
       let fee = document.getElementById("fee").value.replace(/\./g, "").replace(/,/g, "");
 
       if (date && order && address && fee) {
-        await fetch(API_URL, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            data: [{ date, order, address, fee }]
-          })
-        });
-        // Xóa dữ liệu input sau khi thêm
+        await addDoc(collection(db, "orders"), { date, order, address, fee });
         document.getElementById("order").value = "";
         document.getElementById("address").value = "";
         document.getElementById("fee").value = "";
-        
         loadOrders();
       } else {
         alert("Vui lòng nhập đủ thông tin!");
       }
-    }
+    };
 
-    // Xóa 1 đơn hàng theo tên "order"
-    async function deleteOrder(orderName) {
+    // Xóa đơn hàng
+    window.deleteOrder = async function(id) {
       if (confirm("Bạn có chắc muốn xóa đơn này?")) {
-        await fetch(`${API_URL}/order/${encodeURIComponent(orderName)}`, {
-          method: "DELETE"
-        });
+        await deleteDoc(doc(db, "orders", id));
         loadOrders();
       }
-    }
+    };
 
-    // Xóa toàn bộ đơn hàng
-    async function clearAll() {
+    // Xóa tất cả đơn hàng
+    window.clearAll = async function() {
       if (confirm("Bạn có chắc muốn xóa TẤT CẢ đơn hàng?")) {
-        await fetch(API_URL + "/all", { method: "DELETE" });
+        const q = query(collection(db, "orders"));
+        const snapshot = await getDocs(q);
+        for (const docSnap of snapshot.docs) {
+          await deleteDoc(doc(db, "orders", docSnap.id));
+        }
         loadOrders();
       }
-    }
+    };
 
-    // Format số tiền trong ô input "fee"
+    // Format số tiền khi nhập
     const feeInput = document.getElementById("fee");
     feeInput.addEventListener("input", () => {
       let value = feeInput.value.replace(/\D/g, "");
@@ -264,7 +173,7 @@
       }
     });
 
-    // Tự động set ngày hôm nay khi mở trang + load dữ liệu
+    // Set ngày hôm nay + load
     window.onload = () => {
       let today = new Date().toISOString().split("T")[0];
       document.getElementById("date").value = today;
